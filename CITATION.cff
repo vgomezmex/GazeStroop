@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "GazeStroop: an open-source web platform for multimodal Stroop experiments with synchronized eye tracking, pupillometry and NASA-TLX"
+type: software
+version: 1.0.0
+date-released: 2026-10-13
+license: MIT
+repository-code: "https://github.com/vgomezmex/GazeStroop"
+keywords:
+  - Stroop
+  - eye tracking
+  - pupillometry
+  - cognitive load
+  - NASA-TLX
+  - Gazepoint
+authors:
+  - given-names: Víctor Alberto
+    family-names: Gómez-Pérez
+    affiliation: "Tecnológico Nacional de México / Instituto Tecnológico de San Juan del Río"
+  - given-names: Alejandro
+    family-names: Jarillo-Silva
+    affiliation: "Universidad de la Sierra Sur"
+    email: ajarillo@unsis.edu.mx
+  - given-names: Armida
+    family-names: González-Lorence
+    affiliation: "Tecnológico Nacional de México / Instituto Tecnológico de San Juan del Río"
+  - given-names: Sonia
+    family-names: Mendoza
+    affiliation: "CINVESTAV-IPN"
+    email: sonia.mendoza@cinvestav.mx
+  - given-names: Omar Arturo
+    family-names: Domínguez-Ramírez
+    affiliation: "Universidad Autónoma del Estado de Hidalgo"
+  - given-names: Verónica
+    family-names: Rodríguez-López
+    affiliation: "Universidad Tecnológica de la Mixteca"

@@ -1,0 +1,15 @@
+{
+  "name": "gazepoint-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local relay between the Gazepoint GP3 (via Gazepoint Control's OpenGaze TCP API on 127.0.0.1:4242) and the Stroop Eye-Tracking web app, over a local WebSocket. Runs on the participant's PC.",
+  "type": "module",
+  "main": "bridge.mjs",
+  "scripts": {
+    "start": "node bridge.mjs",
+    "mock": "node bridge.mjs --mock"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// NIVEL 1 — PARTICIPANTE
+// ============================================================
+
+model Participant {
+  id                       String   @id @default(cuid())
+  studyCode                String   @unique
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  // Sección A — Datos sociodemográficos
+  fullName                 String   @default("")
+  age                      Int
+  sex                      String
+  education                 String
+  computerHoursPerDay      String
+
+  // Sección B — Condiciones visuales
+  glassesUse                String   @default("No")
+  visualDifficulty          String   @default("No")
+  visualDifficultyDesc      String?
+
+  // Sección C — Sueño y fatiga
+  hoursSleepLastNight       Float
+  sleepQuality              Int
+  currentRestLevel          Int
+  currentFatigueLevel       Int
+
+  // Sección D — Estado actual (escalas 0–10)
+  stateFatigue             Int
+  stateStress              Int
+  stateSleepiness          Int
+  stateMotivation          Int
+  stateConcentration       Int
+
+  // Sección E — Consumo reciente
+  caffeineLast3h            String   @default("No")
+  caffeineType              String?
+  caffeineAmount           String?
+  caffeineTime             String?
+  alcoholLast12h           String   @default("No")
+  exerciseLast3h            String   @default("No")
+
+  // Sección F — Control experimental
+  lastMealTime             String?
+  locationComfort           String   @default("Sí")
+
+  // Consentimiento informado
+  consentVersion           String   @default("1.0")
+  consentAcceptedAt         DateTime?
+
+  // Relaciones
+  sessions                  Session[]
+  features                  FeatureStore[]
+  auditLogs                AuditLog[]
+}
+
+// ============================================================
+// NIVEL 2 — SESIÓN / PRUEBA
+// ============================================================
+
+model Session {
+  id                       String   @id @default(cuid())
+  participantId             String
+  researcherId              Int?
+  studyCode                String
+  researcherCode            String
+  startedAt                DateTime @default(now())
+  completedAt               DateTime?
+
+  // Calibración
+  calibrationStatus         String   @default("pending")
+  calibrationErrorDeg       Float?
+  calibrationTimestamp      DateTime?
+
+  // NASA-TLX (6 dimensiones 0-100)
+  nasaMentalDemand         Int?
+  nasaPhysicalDemand        Int?
+  nasaTemporalDemand        Int?
+  nasaPerformance           Int?
+  nasaEffort                Int?
+  nasaFrustration           Int?
+  nasaGlobalScore           Float?
+  nasaWeightingMethod      String   @default("simple")
+
+  // Sección J — Evaluación global post-experimento
+  postDifficultyPerceived   Int?
+  postConcentrationReq     Int?
+  postFatigue              Int?
+  postStress               Int?
+  postDifficultyResponding Int?
+
+  // Sección K — Experiencia del participante
+  testClear                String?
+  instructionsClear         String?
+  timeSufficient            String?
+  hadDistractions          String?
+  distractionDescription    String?
+  hadTechnicalIssues       String?
+  technicalIssueDesc       String?
+  additionalComments       String?
+
+  // Sección L — Registro del investigador
+  researcherExcessiveHead  String?
+  researcherTrackingProbs String?
+  researcherCalibStable    String?
+  researcherInterruptions  String?
+  researcherFollowedInstr  String?
+  excludedFromAnalysis     Boolean  @default(false)
+  exclusionReason           String?
+
+  // Calidad de datos
+  dataQualityPercent        Float?
+  dataLostPercent          Float?
+  trialsExcludedCount      Int     @default(0)
+
+  // Pipeline de latencia
+  estimatedPipelineLatency  Float?
+
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  // Relaciones
+  participant               Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  researcher                Researcher? @relation(fields: [researcherId], references: [id])
+  trials                   Trial[]
+  eyeTrackingSamples       EyeTrackingSample[]
+  calibrationPoints        CalibrationPoint[]
+  featureStores            FeatureStore[]
+  auditLogs                AuditLog[]
+}
+
+// ============================================================
+// NIVEL 3 — TRIAL (ENSAYO)
+// ============================================================
+
+model Trial {
+  id                       String   @id @default(cuid())
+  sessionId                 String
+  blockOrder               Int
+  condition                 String
+  congruency               String
+
+  // Estímulo
+  stimulusWord             String
+  stimulusInkColorHex      String
+  stimulusInkColorName     String
+  correctAnswer             String
+  correctRoiPosition       String
+
+  // Distractores (JSON array de nombres de color)
+  distractorColors          String
+
+  // Respuesta
+  participantResponse       String?
+  responseRoiPosition       String?
+  reactionTimeMs           Float?
+  accuracy                  String?
+  isOmission               Boolean  @default(false)
+
+  // Flags
+  isPractice                Boolean  @default(false)
+  isValid                   Boolean  @default(true)
+
+  // Timestamps (almacenados como Float ms desde performance.now)
+  stimulusOnsetPerfNow     Float?
+  responsePerfNow          Float?
+  trialStartedAt           DateTime @default(now())
+  trialCompletedAt          DateTime?
+
+  // Eye tracking resumen por trial
+  pupilDiameterMean        Float?
+  pupilDiameterMax         Float?
+  pupilDiameterChange      Float?
+  fixationCount            Int?
+  fixationDurationMean     Float?
+  saccadeCount             Int?
+  saccadeAmplitudeMean     Float?
+  saccadeVelocityMean      Float?
+
+  createdAt                 DateTime @default(now())
+
+  // Relaciones
+  session                   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eyeTrackingSamples       EyeTrackingSample[]
+  features                  FeatureStore[]
+}
+
+// ============================================================
+// EYE TRACKING SAMPLES (alta frecuencia)
+// ============================================================
+
+model CalibrationPoint {
+  id          String   @id @default(cuid())
+  sessionId    String
+  pointIndex  Int
+  targetX     Float
+  targetY     Float
+  errorDeg    Float?
+  createdAt   DateTime @default(now())
+
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+// ============================================================
+// EYE TRACKING SAMPLES (alta frecuencia)
+// ============================================================
+
+model EyeTrackingSample {
+  id                  String   @id @default(cuid())
+  // Opcional: es null durante fases sin ensayo formal (línea base
+  // pupilar, calibración). Cuando pertenece a un ensayo, /api/trial/start
+  // ya creó el Trial ANTES de que arranque la captura, así que aquí sí
+  // referencia un id real desde el primer momento (a diferencia de un
+  // esquema con backfill diferido).
+  trialId              String?
+  sessionId             String
+  // 'trial' | 'baseline' | 'calibration'
+  phase                String   @default("trial")
+  timestamp            Float
+  timestampSystem      Float?
+  timestampTracker     Float?
+  // BPOG — mirada "mejor" (promedio de ambos ojos), cruda, sin filtrar
+  gazeX                Float?
+  gazeY                Float?
+  gazeValid            Boolean  @default(true)
+  // FPOG — mirada filtrada por el algoritmo interno de fijación del tracker
+  fpogX                Float?
+  fpogY                Float?
+  fpogS                Float?   // inicio de la fijación (s desde init/calibración)
+  fpogD                Float?   // duración de la fijación (s)
+  fpogValid            Boolean  @default(true)
+  fixationId           Int?
+  // Pupila en milímetros (valor ya usado en el resto del sistema para
+  // pupilDiameter = promedio de ambos ojos)
+  pupilDiameterLeft    Float?
+  pupilDiameterRight   Float?
+  pupilDiameter        Float?
+  pupilValid           Boolean  @default(true)
+  lpmmValid            Boolean  @default(true)
+  rpmmValid            Boolean  @default(true)
+  // Datos crudos de imagen de cámara por ojo
+  lpcX                 Float?
+  lpcY                 Float?
+  lpd                  Float?   // diámetro pupila izquierda en píxeles
+  lps                  Float?   // factor de escala pupila izquierda
+  lpv                  Boolean  @default(true)
+  rpcX                 Float?
+  rpcY                 Float?
+  rpd                  Float?   // diámetro pupila derecha en píxeles
+  rps                  Float?   // factor de escala pupila derecha
+  rpv                  Boolean  @default(true)
+  // Parpadeos
+  bkid                 Int?     // id de parpadeo (0 = no hay parpadeo)
+  bkdur                Float?   // duración del parpadeo anterior (s)
+  bkpmin               Int?     // parpadeos en los últimos 60s
+  // Perilla de control física (accesorio opcional; puede no existir en el
+  // hardware del participante — ver nota en gazepoint-bridge/bridge.mjs)
+  dial                 Float?
+  dialValid            Boolean  @default(false)
+  eventType            String   @default("none")
+  syncOffset           Float?
+  driftCorrection      Float?
+  createdAt            DateTime @default(now())
+
+  // Relaciones
+  trial                Trial?   @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  session              Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([trialId])
+  @@index([sessionId])
+  @@index([sessionId, phase])
+}
+
+// ============================================================
+// ADMIN / INVESTIGADORES
+// ============================================================
+
+model Researcher {
+  id            Int      @id @default(autoincrement())
+  code          String   @unique
+  name          String
+  email         String?
+  phone         String?
+  institution   String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions      Session[]
+  auditLogs     AuditLog[]
+
+  @@index([code])
+}
+
+model Admin {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  role        String   @default("investigador")
+  name        String
+  active      Boolean  @default(true)
+  lastLogin   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  auditLogs   AuditLog[]
+}
+
+// ============================================================
+// CONFIGURACIÓN DEL EXPERIMENTO
+// ============================================================
+
+model ExperimentConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt  DateTime @updatedAt
+
+  @@index([key])
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  adminId        String?
+  researcherId   Int?
+  participantId  String?
+  sessionId      String?
+  action         String
+  details        String?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  admin          Admin?       @relation(fields: [adminId], references: [id])
+  researcher     Researcher?  @relation(fields: [researcherId], references: [id])
+  participant    Participant? @relation(fields: [participantId], references: [id])
+  session        Session?     @relation(fields: [sessionId], references: [id])
+
+  @@index([adminId])
+  @@index([researcherId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// FEATURE STORE (preparado para ML — Fase 5)
+// ============================================================
+
+model FeatureStore {
+  id                    String   @id @default(cuid())
+  participantId          String
+  sessionId              String
+  trialId                String?
+  pupilMean             Float?
+  pupilMax              Float?
+  pupilChange           Float?
+  fixationDuration       Float?
+  fixationCount         Float?
+  saccadeAmplitude       Float?
+  saccadeVelocity       Float?
+  gazeEntropy           Float?
+  rt                    Float?
+  accuracy              Float?
+  cognitiveConditionLabel String?
+  createdAt             DateTime @default(now())
+
+  participant            Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  trial                 Trial?      @relation(fields: [trialId], references: [id])
+  session               Session     @relation(fields: [sessionId], references: [id])
+
+  @@index([participantId])
+  @@index([sessionId])
+  @@index([trialId])
+}
