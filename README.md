@@ -1,5 +1,7 @@
 # GazeStroop
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23355413.svg)](https://doi.org/10.5281/zenodo.23355413) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **An open-source web platform for multimodal Stroop experiments with synchronized eye tracking, pupillometry and NASA-TLX.**
 
 GazeStroop administers a computerized Stroop paradigm and records, synchronized with each trial, the participant's behavioral, ocular and subjective responses. It implements five configurable conditions (Neutral, Word, Reverse Stroop, Color and Stroop) with balanced stimulus generation, and integrates with the **Gazepoint GP3** eye tracker through a small local bridge that translates the OpenGaze API to WebSocket. An administration panel lets researchers configure the protocol, audit sessions, visualize results and export datasets ready for statistical analysis and machine learning.
@@ -126,7 +128,7 @@ src/types/            Conditions, colors and data types
 
 ## How to cite
 
-If you use GazeStroop, please cite the software (see [`CITATION.cff`](CITATION.cff)). The article describing the software is currently under review.
+If you use GazeStroop, please cite the software: https://doi.org/10.5281/zenodo.23355413 (see also [`CITATION.cff`](CITATION.cff)). The article describing the software is currently under review.
 
 ## License
 
